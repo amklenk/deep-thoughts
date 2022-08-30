@@ -3,9 +3,11 @@ import { Navigate, useParams } from 'react-router-dom';
 
 import ThoughtList from '../components/ThoughtList';
 import FriendList from '../components/FriendList';
+import ThoughtForm from '../components/ThoughtForm';
 
-import { useQuery } from '@apollo/client';
-import { QUERY_USER, QUERY_ME } from '../utils/queries';
+import { useQuery, useMutation } from '@apollo/client';
+import { QUERY_USER, QUERY_ME} from '../utils/queries';
+import { ADD_FRIEND } from '../utils/mutations';
 import Auth from '../utils/auth';
 
 const Profile = (props) => {
@@ -15,6 +17,19 @@ const Profile = (props) => {
   });
 
   const user = data?.me || data?.user || {};
+
+  const [addFriend] = useMutation(ADD_FRIEND);
+
+  // handle click for friend button
+  const handleClick = async () => {
+    try {
+      await addFriend({
+        variables: { id: user._id }
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   // navigate to personal profile page if username is the logged-in user's
 if (Auth.loggedIn() && Auth.getProfile().data.username === userParam) {
@@ -41,6 +56,12 @@ if (Auth.loggedIn() && Auth.getProfile().data.username === userParam) {
         </h2>
       </div>
 
+      {userParam && ( 
+        <button className='btn ml-auto' onClick={handleClick}>
+          Add Friend
+        </button>
+      )}
+
       <div className="flex-row justify-space-between mb-3">
         <div className="col-12 mb-3 col-lg-8">
           <ThoughtList thoughts={user.thoughts} title={`${user.username}'s thoughts...`} />
@@ -50,6 +71,7 @@ if (Auth.loggedIn() && Auth.getProfile().data.username === userParam) {
           <FriendList username={user.username} friendCount={user.friendCount} friends={user.friends} />
         </div>
       </div>
+      <div className='mb-3'>{!userParam && <ThoughtForm />}</div>
     </div>
   );
 };
